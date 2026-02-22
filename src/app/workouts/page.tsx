@@ -74,6 +74,20 @@ export default function WorkoutsPage() {
   ]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
+  // Quick workout templates
+  const quickWorkouts = [
+    { id: 1, name: 'Full Body Blast', duration: '45min', exercises: 8, icon: '💪', color: 'blue' },
+    { id: 2, name: 'Upper Body Focus', duration: '35min', exercises: 6, icon: '🏋️', color: 'green' },
+    { id: 3, name: 'Leg Day', duration: '40min', exercises: 7, icon: '🦵', color: 'purple' },
+    { id: 4, name: 'Core & Cardio', duration: '30min', exercises: 5, icon: '🔥', color: 'red' },
+  ];
+
+  // Calculate stats
+  const totalWorkouts = workoutHistory.length;
+  const currentStreak = 5; // Calculate based on workout history
+  const weeklyGoal = 4;
+  const weeklyProgress = (totalWorkouts / weeklyGoal) * 100;
+
   const handleStartWorkout = () => {
     setIsLogging(true);
     setWorkoutMode('selection');
@@ -210,6 +224,91 @@ export default function WorkoutsPage() {
       <Navigation />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section with Quick Stats */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Your Workouts
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                Track, analyze, and improve your fitness journey
+              </p>
+            </div>
+            <Button variant="primary" onClick={handleStartWorkout} className="px-8 py-4 text-lg">
+              <span className="mr-2">🚀</span>
+              <span>Start Workout</span>
+            </Button>
+          </div>
+
+          {/* Quick Stats Dashboard */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm mb-1">Total Workouts</p>
+                  <p className="text-3xl font-bold">{totalWorkouts}</p>
+                </div>
+                <div className="text-4xl opacity-80">💪</div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm mb-1">Current Streak</p>
+                  <p className="text-3xl font-bold">{currentStreak} days</p>
+                </div>
+                <div className="text-4xl opacity-80">🔥</div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm mb-1">Weekly Goal</p>
+                  <p className="text-3xl font-bold">{totalWorkouts}/{weeklyGoal}</p>
+                </div>
+                <div className="text-4xl opacity-80">🎯</div>
+              </div>
+            </Card>
+
+            <Card className="p-6 bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm mb-1">This Week</p>
+                  <p className="text-3xl font-bold">{Math.round(weeklyProgress)}%</p>
+                </div>
+                <div className="text-4xl opacity-80">📈</div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Quick Start Templates */}
+          <Card className="p-6 mb-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Quick Start Workouts
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {quickWorkouts.map((workout) => (
+                <button
+                  key={workout.id}
+                  onClick={handleStartWorkout}
+                  className={`p-4 rounded-lg border-2 border-${workout.color}-200 dark:border-${workout.color}-800 hover:border-${workout.color}-500 transition-all hover:shadow-lg bg-${workout.color}-50 dark:bg-${workout.color}-900/20 text-left`}
+                >
+                  <div className="text-3xl mb-2">{workout.icon}</div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
+                    {workout.name}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {workout.duration} • {workout.exercises} exercises
+                  </p>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </div>
+
         {/* Tab Navigation */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
@@ -230,12 +329,6 @@ export default function WorkoutsPage() {
               </button>
             ))}
           </div>
-
-          {/* Quick Start Workout Button */}
-          <Button variant="primary" onClick={handleStartWorkout}>
-            <span className="mr-2">🚀</span>
-            <span>Start Workout</span>
-          </Button>
         </div>
 
         {/* Tab Content */}
