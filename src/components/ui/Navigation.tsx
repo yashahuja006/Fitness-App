@@ -15,26 +15,38 @@ export function Navigation() {
 
   useEffect(() => {
     // Load user XP from localStorage
-    const savedXP = localStorage.getItem('userXP');
-    if (savedXP) {
-      setUserXP(JSON.parse(savedXP));
-    } else {
-      // Initialize default XP
-      const defaultXP: UserXP = {
-        totalXP: 0,
-        level: 1,
-        currentLevelXP: 0,
-        nextLevelXP: 1000,
-        xpSources: {
-          workoutCompletion: 0,
-          streakBonus: 0,
-          milestones: 0,
-          perfectWeeks: 0,
-        },
-      };
-      setUserXP(defaultXP);
-      localStorage.setItem('userXP', JSON.stringify(defaultXP));
-    }
+    const loadXP = () => {
+      const savedXP = localStorage.getItem('userXP');
+      if (savedXP) {
+        setUserXP(JSON.parse(savedXP));
+      } else {
+        // Initialize default XP
+        const defaultXP: UserXP = {
+          totalXP: 0,
+          level: 1,
+          currentLevelXP: 0,
+          nextLevelXP: 1000,
+          xpSources: {
+            workoutCompletion: 0,
+            streakBonus: 0,
+            milestones: 0,
+            perfectWeeks: 0,
+          },
+        };
+        setUserXP(defaultXP);
+        localStorage.setItem('userXP', JSON.stringify(defaultXP));
+      }
+    };
+
+    loadXP();
+
+    // Listen for XP updates
+    const handleXPUpdate = () => {
+      loadXP();
+    };
+
+    globalThis.addEventListener('xpUpdated', handleXPUpdate);
+    return () => globalThis.removeEventListener('xpUpdated', handleXPUpdate);
   }, []);
 
   return (

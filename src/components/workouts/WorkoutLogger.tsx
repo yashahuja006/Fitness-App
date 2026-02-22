@@ -8,6 +8,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ExerciseSelectionModal } from './ExerciseSelectionModal';
+import { WorkoutGamificationService } from '@/lib/workoutGamificationService';
+import { XPNotification } from '@/components/gamification/XPNotification';
+import { LevelUpModal } from '@/components/gamification/LevelUpModal';
+import { AchievementNotification } from '@/components/gamification/AchievementNotification';
 
 interface WorkoutLoggerProps {
   initialWorkout?: Partial<WorkoutSession>;
@@ -15,7 +19,7 @@ interface WorkoutLoggerProps {
   onCancel: () => void;
 }
 
-export function WorkoutLogger({ initialWorkout, onSave, onCancel }: WorkoutLoggerProps) {
+export function WorkoutLogger({ initialWorkout, onSave, onCancel }: Readonly<WorkoutLoggerProps>) {
   const [workout, setWorkout] = useState<Partial<WorkoutSession>>({
     name: 'Quick Workout',
     exercises: [],
@@ -32,6 +36,19 @@ export function WorkoutLogger({ initialWorkout, onSave, onCancel }: WorkoutLogge
   // ID counter for generating unique IDs
   const [idCounter, setIdCounter] = useState(0);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
+
+  // Gamification state
+  const [showXPNotification, setShowXPNotification] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false);
+  const [levelUpData, setLevelUpData] = useState({ oldLevel: 1, newLevel: 1 });
+  const [showAchievementNotification, setShowAchievementNotification] = useState(false);
+  const [currentAchievement, setCurrentAchievement] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+  } | null>(null);
 
   // Workout timer
   useEffect(() => {
@@ -149,6 +166,52 @@ export function WorkoutLogger({ initialWorkout, onSave, onCancel }: WorkoutLogge
       createdAt: now,
       updatedAt: now,
     };
+
+    // Process gamification
+    const gamificationResult = WorkoutGamificationService.processWorkoutCompletion(completedWorkout);
+    
+    // Show XP notification
+    setXpEarned(gamificationResult.xpEarned);
+    setShowXPNotification(true);
+
+    // Show achievement notifications
+    if (gamificationResult.achievementsUnlocked.length > 0) {
+      const achievementMap: Record<string, { title: string; description: string; icon: string }> = {
+        first_workout: { title: 'First Steps', description: 'Completed your first workout!', icon: '🎯' },
+        '100_workouts': { title: 'Century Club', description: 'Completed 100 workouts!', icon: '💯' },
+        '500_workouts': { title: 'Elite Athlete', description: 'Completed 500 workouts!', icon: '🏆' },
+        '7_day_streak': { title: 'Week Warrior', description: '7-day workout streak!', icon: '🔥' },
+        '30_day_streak': { title: 'Monthly Master', description: '30-day workout streak!', icon: '⚡' },
+        '90_day_streak': { title: 'Unstoppable', description: '90-day workout streak!', icon: '👑' },
+      };
+
+      // Show first achievement
+      const firstAchievement = gamificationResult.achievementsUnlocked[0];
+      const achievementData = achievementMap[firstAchievement];
+      if (achievementData) {
+        setCurrentAchievement({
+          id: firstAchievement,
+          ...achievementData,
+        });
+        setTimeout(() => {
+          setShowAchievementNotification(true);
+        }, 3500); // Show after XP notification
+      }
+    }
+
+    // Show level up modal if leveled up
+    if (gamificationResult.leveledUp) {
+      setLevelUpData({
+        oldLevel: gamificationResult.oldLevel,
+        newLevel: gamificationResult.newLevel,
+      });
+      setTimeout(() => {
+        setShowLevelUpModal(true);
+      }, 1000); // Show after XP notification
+    }
+
+    // Trigger navigation XP update via custom event
+    globalThis.dispatchEvent(new CustomEvent('xpUpdated'));
 
     onSave(completedWorkout);
   };
@@ -359,6 +422,28 @@ export function WorkoutLogger({ initialWorkout, onSave, onCancel }: WorkoutLogge
           </div>
         </div>
       </Card>
+
+      {/* XP Notification */}
+      <XPNotification
+        xpEarned={xpEarned}
+        isVisible={showXPNotification}
+        onClose={() => setShowXPNotification(false)}
+      />
+
+      {/* Achievement Notification */}
+      <AchievementNotification
+        achievement={currentAchievement}
+        isVisible={showAchievementNotification}
+        onClose={() => setShowAchievementNotification(false)}
+      />
+
+      {/* Level Up Modal */}
+      <LevelUpModal
+        isOpen={showLevelUpModal}
+        onClose={() => setShowLevelUpModal(false)}
+        oldLevel={levelUpData.oldLevel}
+        newLevel={levelUpData.newLevel}
+      />
     </div>
   );
 }
