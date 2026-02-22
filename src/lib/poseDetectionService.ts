@@ -53,7 +53,7 @@ export class PoseDetectionService {
   private onError?: (error: PoseDetectionError) => void;
 
   // Enhanced analysis integration
-  private enableAdvancedAnalysis = false;
+  private isAdvancedAnalysisEnabled = false;
   private exerciseType: ExerciseType = 'squat';
   private exerciseMode: ExerciseMode = 'beginner';
   private currentState: ExerciseState = 's1';
@@ -65,6 +65,13 @@ export class PoseDetectionService {
     cameraViewAnalyzer?: any;
     adaptiveFeedbackEngine?: any;
   } = {};
+
+  // Performance optimization (Task 16.1)
+  private useWebWorker = true;
+  private angleCalculatorWorker?: any;
+  private performanceMonitor?: any;
+  private frameThrottleInterval = 0; // 0 = no throttling
+  private lastProcessedFrameTime = 0;
 
   private readonly defaultConfig: PoseDetectionConfig = {
     modelComplexity: 1,
@@ -203,13 +210,32 @@ export class PoseDetectionService {
    */
   async enableAdvancedAnalysis(
     exerciseType: ExerciseType = 'squat',
-    exerciseMode: ExerciseMode = 'beginner'
+    exerciseMode: ExerciseMode = 'beginner',
+    options: { useWebWorker?: boolean; targetFPS?: number } = {}
   ): Promise<void> {
-    this.enableAdvancedAnalysis = true;
+    this.isAdvancedAnalysisEnabled = true;
     this.exerciseType = exerciseType;
     this.exerciseMode = exerciseMode;
+    this.useWebWorker = options.useWebWorker !== false; // Default to true
 
     try {
+      // Initialize performance monitor (Task 16.1)
+      const { PerformanceMonitor } = await import('@/lib/performanceMonitor');
+      this.performanceMonitor = new PerformanceMonitor({
+        targetFPS: options.targetFPS || 30,
+        maxLatency: 50,
+        memoryThreshold: 500,
+        sampleWindow: 30
+      });
+
+      // Initialize Web Worker for angle calculations if enabled (Task 16.1)
+      if (this.useWebWorker) {
+        const { AngleCalculatorWorkerService } = await import('@/lib/angleCalculatorWorkerService');
+        this.angleCalculatorWorker = new AngleCalculatorWorkerService();
+        await this.angleCalculatorWorker.initialize();
+        console.log('Web Worker enabled for angle calculations');
+      }
+
       // Dynamically import analysis services to avoid circular dependencies
       const [
         { angleCalculator },
@@ -243,7 +269,7 @@ export class PoseDetectionService {
       console.log('Advanced analysis enabled with integrated services');
     } catch (error) {
       console.error('Failed to enable advanced analysis:', error);
-      this.enableAdvancedAnalysis = false;
+      this.isAdvancedAnalysisEnabled = false;
       throw new Error('Failed to initialize advanced analysis services');
     }
   }
@@ -252,8 +278,20 @@ export class PoseDetectionService {
    * Disable advanced analysis
    */
   disableAdvancedAnalysis(): void {
-    this.enableAdvancedAnalysis = false;
+    this.isAdvancedAnalysisEnabled = false;
     this.analysisServices = {};
+    
+    // Clean up Web Worker (Task 16.1)
+    if (this.angleCalculatorWorker) {
+      this.angleCalculatorWorker.dispose();
+      this.angleCalculatorWorker = undefined;
+    }
+    
+    // Reset performance monitor (Task 16.1)
+    if (this.performanceMonitor) {
+      this.performanceMonitor.reset();
+      this.performanceMonitor = undefined;
+    }
   }
 
   /**
@@ -361,9 +399,16 @@ export class PoseDetectionService {
         });
       }
 
-      // Perform advanced analysis if enabled
-      if (this.enableAdvancedAnalysis && this.analysisServices.angleCalculator) {
-        await this.performAdvancedAnalysis(landmarks);
+      // Perform advanced analysis if enabled (with frame throttling - Task 16.1)
+      if (this.isAdvancedAnalysisEnabled && this.analysisServices.angleCalculator) {
+        const now = performance.now();
+        
+        // Apply frame throttling if configured
+        if (this.frameThrottleInterval === 0 || 
+            now - this.lastProcessedFrameTime >= this.frameThrottleInterval) {
+          this.lastProcessedFrameTime = now;
+          await this.performAdvancedAnalysis(landmarks);
+        }
       }
 
       // Notify listeners
@@ -376,9 +421,12 @@ export class PoseDetectionService {
   }
 
   /**
-   * Perform integrated advanced analysis
+   * Perform integrated advanced analysis with performance monitoring (Task 16.1)
    */
   private async performAdvancedAnalysis(landmarks: PoseLandmark[]): Promise<void> {
+    // Start performance monitoring (Task 16.1)
+    const frameStartTime = this.performanceMonitor?.startFrame() || performance.now();
+
     try {
       const {
         angleCalculator,
@@ -394,8 +442,15 @@ export class PoseDetectionService {
         return; // Services not loaded
       }
 
-      // 1. Calculate angles
-      const angles: ExerciseAngles = angleCalculator.extractExerciseAngles(landmarks);
+      // 1. Calculate angles (using Web Worker if enabled - Task 16.1)
+      let angles: ExerciseAngles;
+      if (this.useWebWorker && this.angleCalculatorWorker?.isReady()) {
+        // Offload to Web Worker for better performance
+        angles = await this.angleCalculatorWorker.extractExerciseAngles(landmarks);
+      } else {
+        // Fallback to main thread calculation
+        angles = angleCalculator.extractExerciseAngles(landmarks);
+      }
 
       // 2. Analyze camera view
       const viewAnalysis: ViewAnalysis = cameraViewAnalyzer.analyzeView({
@@ -441,8 +496,20 @@ export class PoseDetectionService {
         feedbackResponse
       });
 
+      // End performance monitoring with landmark confidence (Task 16.1)
+      if (this.performanceMonitor) {
+        const avgConfidence = landmarks.reduce((sum, l) => sum + l.visibility, 0) / landmarks.length;
+        this.performanceMonitor.endFrame(frameStartTime, avgConfidence);
+      }
+
     } catch (error) {
       console.error('Advanced analysis error:', error);
+      
+      // End performance monitoring even on error (Task 16.1)
+      if (this.performanceMonitor) {
+        this.performanceMonitor.endFrame(frameStartTime);
+      }
+      
       // Continue with basic pose detection even if advanced analysis fails
     }
   }
@@ -590,22 +657,89 @@ export class PoseDetectionService {
     this.exerciseMode = exerciseMode;
 
     // Update analysis services if enabled
-    if (this.enableAdvancedAnalysis) {
+    if (this.isAdvancedAnalysisEnabled) {
       this.analysisServices.exerciseStateMachine?.setExerciseMode(exerciseMode);
       this.analysisServices.repCounter?.updateConfig({ mode: exerciseMode });
     }
   }
 
   /**
-   * Get performance metrics
+   * Set frame rate throttling (Task 16.1)
+   * @param targetFPS Target frames per second (0 = no throttling, 15-30 recommended)
+   */
+  setFrameRateThrottle(targetFPS: number): void {
+    if (targetFPS <= 0) {
+      this.frameThrottleInterval = 0; // No throttling
+    } else {
+      this.frameThrottleInterval = 1000 / targetFPS; // Convert FPS to milliseconds
+    }
+    
+    // Update performance monitor target FPS
+    if (this.performanceMonitor) {
+      this.performanceMonitor.updateConfig({ targetFPS });
+    }
+    
+    console.log(`Frame rate throttle set to ${targetFPS} FPS (${this.frameThrottleInterval}ms interval)`);
+  }
+
+  /**
+   * Enable or disable Web Worker for angle calculations (Task 16.1)
+   */
+  async setUseWebWorker(enabled: boolean): Promise<void> {
+    if (enabled === this.useWebWorker) {
+      return; // No change needed
+    }
+
+    this.useWebWorker = enabled;
+
+    if (enabled && !this.angleCalculatorWorker) {
+      // Initialize Web Worker
+      const { AngleCalculatorWorkerService } = await import('@/lib/angleCalculatorWorkerService');
+      this.angleCalculatorWorker = new AngleCalculatorWorkerService();
+      await this.angleCalculatorWorker.initialize();
+      console.log('Web Worker enabled for angle calculations');
+    } else if (!enabled && this.angleCalculatorWorker) {
+      // Dispose Web Worker
+      this.angleCalculatorWorker.dispose();
+      this.angleCalculatorWorker = undefined;
+      console.log('Web Worker disabled for angle calculations');
+    }
+  }
+
+  /**
+   * Get performance metrics (Task 16.1 - Enhanced with performance monitor)
    */
   getPerformanceMetrics(): {
     frameRate: number;
     processingLatency: number;
     memoryUsage: number;
     landmarkConfidence: number;
+    analysisAccuracy?: number;
+    droppedFrames?: number;
+    totalFrames?: number;
+    performanceIssues?: string[];
+    recommendations?: string[];
   } {
-    // Basic performance metrics (can be enhanced)
+    // Use performance monitor if available (Task 16.1)
+    if (this.performanceMonitor) {
+      const metrics = this.performanceMonitor.getMetrics();
+      const performance = this.performanceMonitor.isPerformanceAcceptable();
+      const recommendations = this.performanceMonitor.getRecommendations();
+
+      return {
+        frameRate: metrics.frameRate,
+        processingLatency: metrics.processingLatency,
+        memoryUsage: metrics.memoryUsage,
+        landmarkConfidence: metrics.landmarkConfidence,
+        analysisAccuracy: metrics.analysisAccuracy,
+        droppedFrames: metrics.droppedFrames,
+        totalFrames: metrics.totalFrames,
+        performanceIssues: performance.issues,
+        recommendations: recommendations.length > 0 ? recommendations : undefined
+      };
+    }
+
+    // Fallback to basic metrics
     const metrics = {
       frameRate: 30, // Estimated based on camera config
       processingLatency: 33, // ~33ms for 30fps
@@ -628,7 +762,7 @@ export class PoseDetectionService {
   }
 
   /**
-   * Cleanup resources
+   * Cleanup resources (Task 16.1 - Enhanced with worker and monitor cleanup)
    */
   dispose(): void {
     this.stopDetection();
@@ -638,12 +772,24 @@ export class PoseDetectionService {
       this.pose = null;
     }
     
+    // Clean up Web Worker (Task 16.1)
+    if (this.angleCalculatorWorker) {
+      this.angleCalculatorWorker.dispose();
+      this.angleCalculatorWorker = undefined;
+    }
+    
+    // Clean up performance monitor (Task 16.1)
+    if (this.performanceMonitor) {
+      this.performanceMonitor.reset();
+      this.performanceMonitor = undefined;
+    }
+    
     this.videoElement = null;
     this.canvasElement = null;
     this.canvasCtx = null;
     this.currentPose = null;
     this.isInitialized = false;
-    this.enableAdvancedAnalysis = false;
+    this.isAdvancedAnalysisEnabled = false;
     this.analysisServices = {};
     
     console.log('Pose detection service disposed');
