@@ -1,11 +1,41 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { XPProgressBar } from '@/components/gamification/XPProgressBar';
+import { LevelBadge } from '@/components/gamification/LevelBadge';
+import { UserXP } from '@/types/program';
 
 export function Navigation() {
   const { user, logout } = useAuth();
+  const [userXP, setUserXP] = useState<UserXP | null>(null);
+  const [showXPDetails, setShowXPDetails] = useState(false);
+
+  useEffect(() => {
+    // Load user XP from localStorage
+    const savedXP = localStorage.getItem('userXP');
+    if (savedXP) {
+      setUserXP(JSON.parse(savedXP));
+    } else {
+      // Initialize default XP
+      const defaultXP: UserXP = {
+        totalXP: 0,
+        level: 1,
+        currentLevelXP: 0,
+        nextLevelXP: 1000,
+        xpSources: {
+          workoutCompletion: 0,
+          streakBonus: 0,
+          milestones: 0,
+          perfectWeeks: 0,
+        },
+      };
+      setUserXP(defaultXP);
+      localStorage.setItem('userXP', JSON.stringify(defaultXP));
+    }
+  }, []);
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -34,6 +64,12 @@ export function Navigation() {
               className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               Workouts
+            </Link>
+            <Link
+              href="/programs"
+              className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              Programs
             </Link>
             <Link
               href="/diet"
@@ -120,6 +156,24 @@ export function Navigation() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* XP Progress (if user has XP) */}
+            {userXP && userXP.totalXP > 0 && (
+              <div 
+                className="hidden lg:block w-48 cursor-pointer"
+                onMouseEnter={() => setShowXPDetails(true)}
+                onMouseLeave={() => setShowXPDetails(false)}
+              >
+                <XPProgressBar userXP={userXP} showDetails={showXPDetails} />
+              </div>
+            )}
+
+            {/* Level Badge */}
+            {userXP && userXP.level > 1 && (
+              <div className="hidden lg:block">
+                <LevelBadge level={userXP.level} size="sm" animated={false} />
+              </div>
+            )}
+
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link
