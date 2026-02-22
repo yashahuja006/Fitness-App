@@ -491,7 +491,10 @@ export class VoiceFeedbackService {
       };
 
       utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event.error);
+        // Only log non-interrupted errors
+        if (event.error !== 'interrupted' && event.error !== 'canceled') {
+          console.error('Speech synthesis error:', event.error);
+        }
         this.isPlaying = false;
         this.currentUtterance = null;
         resolve();

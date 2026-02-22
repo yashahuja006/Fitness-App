@@ -122,7 +122,6 @@ export default function Home() {
                   </button>
                 </Link>
               </motion.div>
-              </motion.div>
 
               {/* Supported Exercises */}
               <motion.div

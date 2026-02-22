@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navigation } from '@/components/ui/Navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
 export default function FormAnalysisDemoPage() {
   const [selectedExercise, setSelectedExercise] = useState('push-up');
+  const router = useRouter();
 
   const exercises = [
     { id: 'push-up', name: 'Push-Up', icon: '💪' },
@@ -271,12 +273,23 @@ export default function FormAnalysisDemoPage() {
               </div>
             </Card>
 
-            {/* Action Button */}
+            {/* Action Buttons */}
             <div className="flex gap-4">
-              <Button className="flex-1" size="lg">
+              <Button 
+                className="flex-1" 
+                size="lg"
+                onClick={() => router.push('/pose-demo')}
+              >
                 Start Workout with AI Coach
               </Button>
-              <Button variant="secondary" className="flex-1" size="lg">
+              <Button 
+                variant="secondary" 
+                className="flex-1" 
+                size="lg"
+                onClick={() => {
+                  alert('Detailed report feature coming soon! This will show comprehensive analytics, progress tracking, and personalized recommendations.');
+                }}
+              >
                 View Detailed Report
               </Button>
             </div>

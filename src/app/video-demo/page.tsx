@@ -44,6 +44,114 @@ export default function VideoDemoPage() {
         'Hold position without sagging',
         'Breathe steadily throughout'
       ]
+    },
+    {
+      id: 4,
+      name: 'Bicep Curls',
+      videoUrl: 'https://www.youtube.com/embed/ykJmrZ5v0Oo',
+      steps: [
+        'Stand with feet shoulder-width apart',
+        'Hold dumbbells at your sides with palms facing forward',
+        'Curl weights up towards shoulders',
+        'Keep elbows close to your body',
+        'Lower back down with control'
+      ]
+    },
+    {
+      id: 5,
+      name: 'Lunges',
+      videoUrl: 'https://www.youtube.com/embed/QOVaHwm-Q6U',
+      steps: [
+        'Stand with feet hip-width apart',
+        'Step forward with one leg',
+        'Lower hips until both knees are at 90 degrees',
+        'Push back to starting position',
+        'Alternate legs'
+      ]
+    },
+    {
+      id: 6,
+      name: 'Mountain Climbers',
+      videoUrl: 'https://www.youtube.com/embed/nmwgirgXLYM',
+      steps: [
+        'Start in high plank position',
+        'Bring one knee towards chest',
+        'Quickly switch legs',
+        'Keep core engaged',
+        'Maintain steady rhythm'
+      ]
+    },
+    {
+      id: 7,
+      name: 'Burpees',
+      videoUrl: 'https://www.youtube.com/embed/TU8QYVW0gDU',
+      steps: [
+        'Start standing, then drop into squat',
+        'Place hands on ground and jump feet back',
+        'Do a push-up',
+        'Jump feet back to hands',
+        'Explode up into a jump'
+      ]
+    },
+    {
+      id: 8,
+      name: 'Jumping Jacks',
+      videoUrl: 'https://www.youtube.com/embed/c4DAnQ6DtF8',
+      steps: [
+        'Start with feet together, arms at sides',
+        'Jump feet apart while raising arms overhead',
+        'Jump back to starting position',
+        'Keep movements smooth and controlled',
+        'Maintain steady breathing'
+      ]
+    },
+    {
+      id: 9,
+      name: 'Deadlift',
+      videoUrl: 'https://www.youtube.com/embed/op9kVnSso6Q',
+      steps: [
+        'Stand with feet hip-width apart',
+        'Bend at hips and knees to grip barbell',
+        'Keep back straight and chest up',
+        'Drive through heels to stand up',
+        'Lower bar back down with control'
+      ]
+    },
+    {
+      id: 10,
+      name: 'Shoulder Press',
+      videoUrl: 'https://www.youtube.com/embed/qEwKCR5JCog',
+      steps: [
+        'Stand or sit with dumbbells at shoulder height',
+        'Press weights overhead until arms are extended',
+        'Keep core engaged',
+        'Lower back to shoulder height',
+        'Avoid arching your back'
+      ]
+    },
+    {
+      id: 11,
+      name: 'Bench Press',
+      videoUrl: 'https://www.youtube.com/embed/rT7DgCr-3pg',
+      steps: [
+        'Lie on bench with feet flat on floor',
+        'Grip bar slightly wider than shoulder-width',
+        'Lower bar to chest with control',
+        'Press bar back up to starting position',
+        'Keep shoulder blades retracted'
+      ]
+    },
+    {
+      id: 12,
+      name: 'Pull-Ups',
+      videoUrl: 'https://www.youtube.com/embed/eGo4IYlbE5g',
+      steps: [
+        'Hang from bar with hands shoulder-width apart',
+        'Pull yourself up until chin is over bar',
+        'Keep core engaged',
+        'Lower yourself back down with control',
+        'Avoid swinging or kipping'
+      ]
     }
   ];
 
