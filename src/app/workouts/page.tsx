@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { WorkoutLogger } from '@/components/workouts/WorkoutLogger';
 import { WorkoutCalendar } from '@/components/workouts/WorkoutCalendar';
@@ -9,6 +9,7 @@ import { MeasurementsTracker } from '@/components/workouts/MeasurementsTracker';
 import { WorkoutRoutines } from '@/components/workouts/WorkoutRoutines';
 import { WorkoutPrograms } from '@/components/workouts/WorkoutPrograms';
 import { CameraWorkoutInterface } from '@/components/workouts/CameraWorkoutInterface';
+import { WorkoutOnboarding, UserWorkoutProfile } from '@/components/workouts/WorkoutOnboarding';
 import { WorkoutSession } from '@/types/workout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -42,6 +43,8 @@ export default function WorkoutsPage() {
   const [workoutMode, setWorkoutMode] = useState<WorkoutMode>('selection');
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserWorkoutProfile | null>(null);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutSession[]>([
     // Sample data for demonstration
     {
@@ -62,31 +65,149 @@ export default function WorkoutsPage() {
           targetReps: 10
         }
       ],
-      startTime: new Date(2026, 0, 23), // Jan 23, 2026
-      endTime: new Date(2026, 0, 23),
+      startTime: new Date(2026, 1, 20), // Feb 20, 2026
+      endTime: new Date(2026, 1, 20),
       duration: 45,
       totalVolume: 585,
       tags: ['push', 'chest'],
       isTemplate: false,
-      createdAt: new Date(2026, 0, 23),
-      updatedAt: new Date(2026, 0, 23)
+      createdAt: new Date(2026, 1, 20),
+      updatedAt: new Date(2026, 1, 20)
+    },
+    {
+      id: 'workout_2',
+      userId: 'user_1',
+      name: 'Leg Day',
+      exercises: [],
+      startTime: new Date(2026, 1, 19),
+      endTime: new Date(2026, 1, 19),
+      duration: 50,
+      totalVolume: 720,
+      tags: ['legs'],
+      isTemplate: false,
+      createdAt: new Date(2026, 1, 19),
+      updatedAt: new Date(2026, 1, 19)
+    },
+    {
+      id: 'workout_3',
+      userId: 'user_1',
+      name: 'Upper Body',
+      exercises: [],
+      startTime: new Date(2026, 1, 18),
+      endTime: new Date(2026, 1, 18),
+      duration: 40,
+      totalVolume: 450,
+      tags: ['upper'],
+      isTemplate: false,
+      createdAt: new Date(2026, 1, 18),
+      updatedAt: new Date(2026, 1, 18)
     }
   ]);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
-  // Quick workout templates
-  const quickWorkouts = [
-    { id: 1, name: 'Full Body Blast', duration: '45min', exercises: 8, icon: '💪', color: 'blue' },
-    { id: 2, name: 'Upper Body Focus', duration: '35min', exercises: 6, icon: '🏋️', color: 'green' },
-    { id: 3, name: 'Leg Day', duration: '40min', exercises: 7, icon: '🦵', color: 'purple' },
-    { id: 4, name: 'Core & Cardio', duration: '30min', exercises: 5, icon: '🔥', color: 'red' },
-  ];
+  // Load user profile from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('userWorkoutProfile');
+    if (saved) {
+      setUserProfile(JSON.parse(saved));
+    } else {
+      setShowOnboarding(true);
+    }
+  }, []);
 
-  // Calculate stats
+  // Calculate real streak
+  const calculateStreak = () => {
+    if (workoutHistory.length === 0) return 0;
+    
+    const sortedWorkouts = [...workoutHistory].sort((a, b) => 
+      new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
+    
+    let streak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    
+    for (const workout of sortedWorkouts) {
+      const workoutDate = new Date(workout.startTime);
+      workoutDate.setHours(0, 0, 0, 0);
+      
+      const daysDiff = Math.floor((currentDate.getTime() - workoutDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === streak) {
+        streak++;
+      } else if (daysDiff > streak) {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
+  // Calculate workouts this week
+  const getWorkoutsThisWeek = () => {
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    
+    return workoutHistory.filter(w => new Date(w.startTime) >= weekStart).length;
+  };
+
   const totalWorkouts = workoutHistory.length;
-  const currentStreak = 5; // Calculate based on workout history
-  const weeklyGoal = 4;
-  const weeklyProgress = (totalWorkouts / weeklyGoal) * 100;
+  const currentStreak = calculateStreak();
+  const weeklyGoal = userProfile?.daysPerWeek || 4;
+  const workoutsThisWeek = getWorkoutsThisWeek();
+  const weeklyProgress = Math.min((workoutsThisWeek / weeklyGoal) * 100, 100);
+
+  // Generate personalized quick workouts based on user profile
+  const getQuickWorkouts = () => {
+    if (!userProfile) {
+      return [
+        { id: 1, name: 'Full Body Blast', duration: '45min', exercises: 8, icon: '💪', color: 'blue' },
+        { id: 2, name: 'Upper Body Focus', duration: '35min', exercises: 6, icon: '🏋️', color: 'green' },
+        { id: 3, name: 'Leg Day', duration: '40min', exercises: 7, icon: '🦵', color: 'purple' },
+        { id: 4, name: 'Core & Cardio', duration: '30min', exercises: 5, icon: '🔥', color: 'red' },
+      ];
+    }
+
+    const duration = `${userProfile.sessionDuration}min`;
+    const level = userProfile.fitnessLevel;
+    
+    if (userProfile.goal === 'lose_weight') {
+      return [
+        { id: 1, name: 'HIIT Cardio Burn', duration, exercises: 6, icon: '🔥', color: 'red' },
+        { id: 2, name: 'Full Body Circuit', duration, exercises: 8, icon: '💪', color: 'orange' },
+        { id: 3, name: 'Cardio & Core', duration, exercises: 7, icon: '🏃', color: 'yellow' },
+        { id: 4, name: 'Fat Burning Mix', duration, exercises: 6, icon: '⚡', color: 'red' },
+      ];
+    } else if (userProfile.goal === 'build_muscle') {
+      return [
+        { id: 1, name: 'Push Day', duration, exercises: 6, icon: '💪', color: 'blue' },
+        { id: 2, name: 'Pull Day', duration, exercises: 6, icon: '🏋️', color: 'green' },
+        { id: 3, name: 'Leg Day', duration, exercises: 7, icon: '🦵', color: 'purple' },
+        { id: 4, name: 'Arms & Shoulders', duration, exercises: 8, icon: '💪', color: 'indigo' },
+      ];
+    } else {
+      return [
+        { id: 1, name: 'Full Body Strength', duration, exercises: 7, icon: '💪', color: 'blue' },
+        { id: 2, name: 'Cardio & Strength', duration, exercises: 6, icon: '🏃', color: 'green' },
+        { id: 3, name: 'Core & Balance', duration, exercises: 6, icon: '🧘', color: 'purple' },
+        { id: 4, name: 'Flexibility & Mobility', duration, exercises: 5, icon: '🤸', color: 'pink' },
+      ];
+    }
+  };
+
+  const quickWorkouts = getQuickWorkouts();
+
+  const handleCompleteOnboarding = (profile: UserWorkoutProfile) => {
+    setUserProfile(profile);
+    localStorage.setItem('userWorkoutProfile', JSON.stringify(profile));
+    setShowOnboarding(false);
+  };
+
+  const handleSkipOnboarding = () => {
+    setShowOnboarding(false);
+  };
 
   const handleStartWorkout = () => {
     setIsLogging(true);
@@ -223,6 +344,13 @@ export default function WorkoutsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
       
+      {showOnboarding && (
+        <WorkoutOnboarding
+          onComplete={handleCompleteOnboarding}
+          onSkip={handleSkipOnboarding}
+        />
+      )}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section with Quick Stats */}
         <div className="mb-8">
@@ -232,13 +360,20 @@ export default function WorkoutsPage() {
                 Your Workouts
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Track, analyze, and improve your fitness journey
+                {userProfile ? `${userProfile.fitnessLevel.charAt(0).toUpperCase() + userProfile.fitnessLevel.slice(1)} • Goal: ${userProfile.goal.replace('_', ' ')}` : 'Track, analyze, and improve your fitness journey'}
               </p>
             </div>
-            <Button variant="primary" onClick={handleStartWorkout} className="px-8 py-4 text-lg">
-              <span className="mr-2">🚀</span>
-              <span>Start Workout</span>
-            </Button>
+            <div className="flex gap-3">
+              {userProfile && (
+                <Button variant="secondary" onClick={() => setShowOnboarding(true)}>
+                  ⚙️ Edit Goals
+                </Button>
+              )}
+              <Button variant="primary" onClick={handleStartWorkout} className="px-8 py-4 text-lg">
+                <span className="mr-2">🚀</span>
+                <span>Start Workout</span>
+              </Button>
+            </div>
           </div>
 
           {/* Quick Stats Dashboard */}
@@ -248,6 +383,7 @@ export default function WorkoutsPage() {
                 <div>
                   <p className="text-blue-100 text-sm mb-1">Total Workouts</p>
                   <p className="text-3xl font-bold">{totalWorkouts}</p>
+                  <p className="text-blue-100 text-xs mt-1">All time</p>
                 </div>
                 <div className="text-4xl opacity-80">💪</div>
               </div>
@@ -258,6 +394,7 @@ export default function WorkoutsPage() {
                 <div>
                   <p className="text-green-100 text-sm mb-1">Current Streak</p>
                   <p className="text-3xl font-bold">{currentStreak} days</p>
+                  <p className="text-green-100 text-xs mt-1">Keep it up!</p>
                 </div>
                 <div className="text-4xl opacity-80">🔥</div>
               </div>
@@ -267,7 +404,8 @@ export default function WorkoutsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm mb-1">Weekly Goal</p>
-                  <p className="text-3xl font-bold">{totalWorkouts}/{weeklyGoal}</p>
+                  <p className="text-3xl font-bold">{workoutsThisWeek}/{weeklyGoal}</p>
+                  <p className="text-purple-100 text-xs mt-1">This week</p>
                 </div>
                 <div className="text-4xl opacity-80">🎯</div>
               </div>
@@ -276,8 +414,9 @@ export default function WorkoutsPage() {
             <Card className="p-6 bg-gradient-to-br from-orange-500 to-orange-600 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm mb-1">This Week</p>
+                  <p className="text-orange-100 text-sm mb-1">Progress</p>
                   <p className="text-3xl font-bold">{Math.round(weeklyProgress)}%</p>
+                  <p className="text-orange-100 text-xs mt-1">Weekly target</p>
                 </div>
                 <div className="text-4xl opacity-80">📈</div>
               </div>
