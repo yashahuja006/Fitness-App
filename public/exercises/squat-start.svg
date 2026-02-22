@@ -1,0 +1,8 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <rect x="180" y="80" width="40" height="120" rx="20" fill="#10b981"/>
+  <circle cx="200" cy="60" r="20" fill="#ef4444"/>
+  <rect x="160" y="200" width="80" height="15" rx="7" fill="#3b82f6"/>
+  <text x="200" y="30" text-anchor="middle" font-family="Arial" font-size="24" font-weight="bold" fill="#374151">Squat Start Position</text>
+  <text x="200" y="250" text-anchor="middle" font-family="Arial" font-size="16" fill="#6b7280">Standing tall, feet shoulder-width apart</text>
+</svg>

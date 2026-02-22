@@ -1,0 +1,23 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.chatRoutes = void 0;
+const express_1 = require("express");
+const ChatController_1 = require("../controllers/ChatController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+exports.chatRoutes = router;
+const chatController = new ChatController_1.ChatController();
+router.use(auth_1.authenticateToken);
+router.get('/sessions', chatController.getChatSessions);
+router.post('/sessions', chatController.createChatSession);
+router.get('/sessions/:sessionId', chatController.getChatSession);
+router.delete('/sessions/:sessionId', chatController.deleteChatSession);
+router.post('/sessions/:sessionId/messages', chatController.sendMessage);
+router.get('/sessions/:sessionId/messages', chatController.getMessages);
+router.get('/suggestions', chatController.getSuggestions);
+router.post('/quick-actions/exercise-search', chatController.quickExerciseSearch);
+router.post('/quick-actions/workout-help', chatController.getWorkoutHelp);
+router.post('/quick-actions/form-guidance', chatController.getFormGuidance);
+router.get('/context', chatController.getChatContext);
+router.put('/context', chatController.updateChatContext);
+//# sourceMappingURL=chat.js.map

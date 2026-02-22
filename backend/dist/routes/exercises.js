@@ -1,0 +1,26 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.exerciseRoutes = void 0;
+const express_1 = require("express");
+const ExerciseController_1 = require("../controllers/ExerciseController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+exports.exerciseRoutes = router;
+const exerciseController = new ExerciseController_1.ExerciseController();
+router.get('/', exerciseController.searchExercises);
+router.get('/:exerciseId', exerciseController.getExercise);
+router.get('/categories', exerciseController.getCategories);
+router.get('/muscle-groups', exerciseController.getMuscleGroups);
+router.get('/equipment', exerciseController.getEquipmentTypes);
+router.use(auth_1.authenticateToken);
+router.get('/:exerciseId/recommendations', exerciseController.getRecommendations);
+router.post('/:exerciseId/favorite', exerciseController.addToFavorites);
+router.delete('/:exerciseId/favorite', exerciseController.removeFromFavorites);
+router.get('/favorites', exerciseController.getUserFavorites);
+router.post('/:exerciseId/rating', exerciseController.rateExercise);
+router.get('/:exerciseId/ratings', exerciseController.getExerciseRatings);
+router.post('/', (0, auth_1.requireRole)(['admin', 'instructor']), exerciseController.createExercise);
+router.put('/:exerciseId', (0, auth_1.requireRole)(['admin', 'instructor']), exerciseController.updateExercise);
+router.delete('/:exerciseId', (0, auth_1.requireRole)(['admin']), exerciseController.deleteExercise);
+router.patch('/:exerciseId/verify', (0, auth_1.requireRole)(['admin']), exerciseController.verifyExercise);
+//# sourceMappingURL=exercises.js.map

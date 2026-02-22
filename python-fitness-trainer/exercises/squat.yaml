@@ -1,0 +1,42 @@
+name: "Squat"
+description: "Basic squat exercise tracking left leg angle"
+
+# MediaPipe landmark indices for left leg
+landmarks:
+  hip: 23    # Left Hip
+  knee: 25   # Left Knee  
+  ankle: 27  # Left Ankle
+
+# State machine definition
+states:
+  START:
+    description: "Standing position - ready to begin squat"
+    condition: "angle > 160"
+    
+  DOWN:
+    description: "Bottom of squat position"
+    condition: "angle < 90"
+    
+  UP:
+    description: "Return to standing position"
+    condition: "angle > 160"
+
+# Feedback rules with voice commands
+feedback:
+  - condition: "angle > 100 and state == DOWN"
+    message: "Go Lower"
+    voice: "Go deeper! Squat lower!"
+  - condition: "angle < 70 and state == DOWN"
+    message: "Perfect Depth!"
+    voice: "Excellent depth! Great form!"
+  - condition: "state == START"
+    message: "Ready to Squat"
+    voice: "Ready for your next squat!"
+
+# Exercise parameters
+parameters:
+  angle_threshold_start: 160
+  angle_threshold_down: 90
+  feedback_threshold: 100
+  perfect_range_min: 70
+  perfect_range_max: 90

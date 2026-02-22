@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect Form AI Trainer - Real-time Pose Analysis</title>
+    <meta name="description" content="AI-powered fitness trainer with real-time pose analysis, perfect form detection, and voice coaching.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>">
+</head>
+<body class="loading">
+    <div class="container">
+        <header class="header">
+            <h1>🏋️ Perfect Form AI Trainer</h1>
+            <p class="subtitle">Real-time pose analysis with AI-powered coaching</p>
+            <div class="beta-badge">✨ Enhanced Edition</div>
+        </header>
+        
+        <div class="main-content">
+            <!-- Video Feed Section -->
+            <div class="video-section">
+                <div class="video-container">
+                    <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Live video feed with pose detection">
+                    <div class="video-overlay">
+                        <span id="fps-counter">FPS: --</span>
+                    </div>
+                </div>
+                
+                <!-- Exercise Selection Buttons -->
+                <div class="exercise-buttons">
+                    <div class="exercise-btn" data-exercise="squat" tabindex="0" role="button" aria-label="Select Squats exercise">
+                        <span class="exercise-emoji">🏃</span>
+                        <h3>Squats</h3>
+                        <p>Lower body strength</p>
+                    </div>
+                    <div class="exercise-btn" data-exercise="pushup" tabindex="0" role="button" aria-label="Select Push-ups exercise">
+                        <span class="exercise-emoji">💪</span>
+                        <h3>Push-ups</h3>
+                        <p>Upper body strength</p>
+                    </div>
+                    <div class="exercise-btn" data-exercise="bicep_curl" tabindex="0" role="button" aria-label="Select Bicep Curls exercise">
+                        <span class="exercise-emoji">💪</span>
+                        <h3>Bicep Curls</h3>
+                        <p>Arm strength</p>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-reset" id="reset-btn" aria-label="Reset rep counter">
+                        🔄 <span>Reset</span>
+                    </button>
+                    <button class="btn btn-voice" id="voice-btn" aria-label="Toggle voice coaching">
+                        🎤 <span>Voice ON</span>
+                    </button>
+                    <button class="btn btn-sound" id="sound-btn" aria-label="Toggle sound effects">
+                        🔊 <span>Sound ON</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Dashboard -->
+            <div class="stats-section">
+                <div id="perfect-form-alert" class="perfect-form-indicator">
+                    🎯 PERFECT FORM REQUIRED!<br>
+                    <small>Only quality reps count!</small>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Current Exercise</h3>
+                        <div id="current-exercise" class="stat-value">Squats</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Perfect Reps</h3>
+                        <div id="rep-count" class="stat-value">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Form Score</h3>
+                        <div id="form-score" class="stat-value form-score">100%</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Current Stage</h3>
+                        <div id="current-stage" class="stat-value">START</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Session Time</h3>
+                        <div id="session-time" class="stat-value">0:00</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Total Reps</h3>
+                        <div id="total-reps" class="stat-value">0</div>
+                    </div>
+                    
+                    <div class="stat-card" id="voice-status" style="display: none;">
+                        <div class="voice-indicator">🎤 AI Coach Speaking...</div>
+                    </div>
+                </div>
+                
+                <!-- Live Feedback -->
+                <div class="feedback-section">
+                    <h3>🎯 Live AI Coaching</h3>
+                    <div id="feedback-messages" class="feedback-messages">
+                        <p class="no-feedback">Select an exercise to start perfect form training</p>
+                    </div>
+                </div>
+                
+                <!-- Exercise Instructions -->
+                <div class="instructions">
+                    <h3>📋 Perfect Form Guide</h3>
+                    <div id="exercise-instructions">
+                        <ol>
+                            <li>Select your exercise from the 3 buttons above</li>
+                            <li>Position yourself so all joints are visible</li>
+                            <li>Follow voice coaching for perfect technique</li>
+                            <li>Only perfect form reps will be counted!</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="keyboard-shortcuts" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <h4 style="margin-bottom: 10px; color: #666; font-size: 0.9rem;">⌨️ Keyboard Shortcuts:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.8rem; color: #888;">
+                            <span><kbd>1</kbd> Squats</span>
+                            <span><kbd>2</kbd> Push-ups</span>
+                            <span><kbd>3</kbd> Bicep Curls</span>
+                            <span><kbd>R</kbd> Reset</span>
+                            <span><kbd>V</kbd> Voice Toggle</span>
+                            <span><kbd>S</kbd> Sound Toggle</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(102, 126, 234, 0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s;">
+        <div style="text-align: center; color: white;">
+            <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+            <h2>Initializing AI Trainer...</h2>
+            <p>Loading pose detection models</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='sounds.js') }}"></script>
+    <script src="{{ url_for('static', filename='enhanced-script.js') }}"></script>
+    
+    <style>
+        body.loading #loading-overlay {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        kbd {
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 2px 4px;
+            font-size: 0.8em;
+            font-family: monospace;
+        }
+    </style>
+</body>
+</html>

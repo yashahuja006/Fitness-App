@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.userRoutes = void 0;
+const express_1 = require("express");
+const UserController_1 = require("../controllers/UserController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+exports.userRoutes = router;
+const userController = new UserController_1.UserController();
+router.use(auth_1.authenticateToken);
+router.get('/profile', userController.getProfile);
+router.put('/profile', userController.updateProfile);
+router.patch('/preferences', userController.updatePreferences);
+router.patch('/metrics', userController.updatePersonalMetrics);
+router.get('/search', userController.searchUsers);
+router.get('/:userId/public-profile', userController.getPublicProfile);
+router.get('/', (0, auth_1.requireRole)(['admin']), userController.getAllUsers);
+router.delete('/:userId', (0, auth_1.requireRole)(['admin']), userController.deleteUser);
+router.patch('/:userId/role', (0, auth_1.requireRole)(['admin']), userController.updateUserRole);
+//# sourceMappingURL=users.js.map

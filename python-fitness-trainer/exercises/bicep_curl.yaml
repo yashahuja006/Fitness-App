@@ -1,0 +1,42 @@
+name: "Bicep Curl"
+description: "Bicep curl exercise tracking elbow angle"
+
+# MediaPipe landmark indices for right arm
+landmarks:
+  shoulder: 12  # Right Shoulder
+  elbow: 14     # Right Elbow  
+  wrist: 16     # Right Wrist
+
+# State machine definition
+states:
+  START:
+    description: "Arms extended - starting position"
+    condition: "angle > 160"
+    
+  UP:
+    description: "Curled up - bicep contracted"
+    condition: "angle < 50"
+    
+  DOWN:
+    description: "Return to extended position"
+    condition: "angle > 160"
+
+# Feedback rules with voice commands
+feedback:
+  - condition: "angle > 70 and state == UP"
+    message: "Curl Higher!"
+    voice: "Curl higher! Bring that weight up to your shoulder!"
+  - condition: "angle < 40 and state == UP"
+    message: "Perfect Curl!"
+    voice: "Excellent curl! Great bicep contraction!"
+  - condition: "state == START"
+    message: "Ready for Curl"
+    voice: "Keep your elbow stable! Ready for next curl!"
+
+# Exercise parameters
+parameters:
+  angle_threshold_start: 160
+  angle_threshold_up: 50
+  feedback_threshold: 70
+  perfect_range_min: 30
+  perfect_range_max: 50

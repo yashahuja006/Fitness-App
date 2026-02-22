@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Camera AI Trainer - Manual Mode</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <style>
+        .manual-controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .rep-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .rep-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        .status-indicator {
+            background: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📷 Real Camera AI Trainer</h1>
+            <p class="subtitle">Live camera feed with manual rep counting</p>
+            <div class="status-indicator">✅ CAMERA LIVE | 🎯 MANUAL MODE</div>
+        </header>
+        
+        <div class="main-content">
+            <!-- Video Feed Section -->
+            <div class="video-section">
+                <div class="video-container">
+                    <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Live camera feed">
+                </div>
+                
+                <!-- Manual Controls -->
+                <div class="manual-controls">
+                    <button class="rep-button" id="add-rep-btn" onclick="addRep()">
+                        ➕ ADD REP
+                    </button>
+                    <p style="color: #666; font-size: 14px;">
+                        Click the button above or press SPACEBAR to manually count reps<br>
+                        This simulates what real pose detection would do
+                    </p>
+                </div>
+                
+                <!-- Exercise Selection Buttons -->
+                <div class="exercise-buttons">
+                    <div class="exercise-btn" data-exercise="squat" onclick="setExercise('squat')">
+                        <span class="exercise-emoji">🏃</span>
+                        <h3>Squats</h3>
+                        <p>Lower body strength</p>
+                    </div>
+                    <div class="exercise-btn" data-exercise="pushup" onclick="setExercise('pushup')">
+                        <span class="exercise-emoji">💪</span>
+                        <h3>Push-ups</h3>
+                        <p>Upper body strength</p>
+                    </div>
+                    <div class="exercise-btn" data-exercise="bicep_curl" onclick="setExercise('bicep_curl')">
+                        <span class="exercise-emoji">💪</span>
+                        <h3>Bicep Curls</h3>
+                        <p>Arm strength</p>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-reset" onclick="resetCounters()">
+                        🔄 <span>Reset</span>
+                    </button>
+                    <button class="btn btn-voice" id="voice-btn">
+                        🎤 <span>Voice ON</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Dashboard -->
+            <div class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Current Exercise</h3>
+                        <div id="current-exercise" class="stat-value">Squats</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Manual Reps</h3>
+                        <div id="rep-count" class="stat-value">0</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Form Score</h3>
+                        <div id="form-score" class="stat-value form-score">100%</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>Current Stage</h3>
+                        <div id="current-stage" class="stat-value">START</div>
+                    </div>
+                </div>
+                
+                <!-- Live Feedback -->
+                <div class="feedback-section">
+                    <h3>📷 Live Camera Status</h3>
+                    <div id="feedback-messages" class="feedback-messages">
+                        <p id="current-feedback">Position yourself in front of camera</p>
+                    </div>
+                </div>
+                
+                <!-- Instructions -->
+                <div class="instructions">
+                    <h3>📋 How to Use</h3>
+                    <ol>
+                        <li>Your camera feed shows live video</li>
+                        <li>Select an exercise from the buttons above</li>
+                        <li>Position yourself in the camera view</li>
+                        <li>Click "+REP" or press SPACEBAR to count each rep</li>
+                        <li>This simulates real pose detection behavior</li>
+                    </ol>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                        <h4 style="color: #666;">🔧 Technical Note:</h4>
+                        <p style="color: #666; font-size: 14px;">
+                            This version shows your real camera feed but requires manual rep counting. 
+                            For automatic pose detection, MediaPipe needs to be properly installed and configured.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update stats every second
+        setInterval(updateStats, 1000);
+        
+        function updateStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('rep-count').textContent = data.reps;
+                    document.getElementById('current-stage').textContent = data.stage;
+                    document.getElementById('current-exercise').textContent = data.exercise_name;
+                    document.getElementById('form-score').textContent = data.form_score + '%';
+                    document.getElementById('current-feedback').textContent = data.feedback;
+                });
+        }
+        
+        function addRep() {
+            fetch('/add_rep', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Visual feedback
+                        const button = document.getElementById('add-rep-btn');
+                        button.style.background = 'linear-gradient(45deg, #2ecc71, #27ae60)';
+                        button.textContent = `✅ REP ${data.reps}!`;
+                        
+                        setTimeout(() => {
+                            button.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a24)';
+                            button.textContent = '➕ ADD REP';
+                        }, 1000);
+                    }
+                });
+        }
+        
+        function setExercise(exerciseName) {
+            fetch(`/set_exercise/${exerciseName}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Update UI to show selected exercise
+                        document.querySelectorAll('.exercise-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        document.querySelector(`[data-exercise="${exerciseName}"]`).classList.add('active');
+                    }
+                });
+        }
+        
+        function resetCounters() {
+            fetch('/reset', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Reset:', data.message);
+                });
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                addRep();
+            } else if (event.key === '1') {
+                setExercise('squat');
+            } else if (event.key === '2') {
+                setExercise('pushup');
+            } else if (event.key === '3') {
+                setExercise('bicep_curl');
+            } else if (event.key.toLowerCase() === 'r') {
+                resetCounters();
+            }
+        });
+        
+        // Initialize
+        updateStats();
+        setExercise('squat');
+    </script>
+</body>
+</html>

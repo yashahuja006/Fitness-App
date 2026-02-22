@@ -1,0 +1,25 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.workoutRoutes = void 0;
+const express_1 = require("express");
+const WorkoutController_1 = require("../controllers/WorkoutController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+exports.workoutRoutes = router;
+const workoutController = new WorkoutController_1.WorkoutController();
+router.use(auth_1.authenticateToken);
+router.get('/', workoutController.getUserWorkouts);
+router.post('/', workoutController.createWorkout);
+router.get('/:workoutId', workoutController.getWorkout);
+router.put('/:workoutId', workoutController.updateWorkout);
+router.delete('/:workoutId', workoutController.deleteWorkout);
+router.post('/:workoutId/start', workoutController.startWorkout);
+router.post('/:workoutId/complete', workoutController.completeWorkout);
+router.post('/:workoutId/pause', workoutController.pauseWorkout);
+router.post('/:workoutId/resume', workoutController.resumeWorkout);
+router.post('/:workoutId/exercises/:exerciseId/sets', workoutController.recordSet);
+router.post('/:workoutId/exercises/:exerciseId/feedback', workoutController.recordFormFeedback);
+router.get('/templates', workoutController.getWorkoutTemplates);
+router.post('/templates', workoutController.createWorkoutTemplate);
+router.post('/:workoutId/share', workoutController.shareWorkout);
+//# sourceMappingURL=workouts.js.map

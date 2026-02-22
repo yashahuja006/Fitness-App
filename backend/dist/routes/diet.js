@@ -1,0 +1,26 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.dietRoutes = void 0;
+const express_1 = require("express");
+const DietController_1 = require("../controllers/DietController");
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+exports.dietRoutes = router;
+const dietController = new DietController_1.DietController();
+router.use(auth_1.authenticateToken);
+router.get('/plans', dietController.getUserDietPlans);
+router.post('/plans/generate', dietController.generateDietPlan);
+router.get('/plans/:planId', dietController.getDietPlan);
+router.put('/plans/:planId', dietController.updateDietPlan);
+router.delete('/plans/:planId', dietController.deleteDietPlan);
+router.get('/plans/:planId/meals', dietController.getPlanMeals);
+router.put('/plans/:planId/meals/:day', dietController.updateDayMeals);
+router.post('/plans/:planId/meals/:day/substitute', dietController.substituteMeal);
+router.post('/log', dietController.logFood);
+router.get('/log', dietController.getFoodLog);
+router.get('/nutrition/summary', dietController.getNutritionSummary);
+router.get('/recipes/search', dietController.searchRecipes);
+router.get('/recipes/:recipeId', dietController.getRecipe);
+router.post('/recipes/:recipeId/favorite', dietController.addRecipeToFavorites);
+router.get('/recipes/favorites', dietController.getFavoriteRecipes);
+//# sourceMappingURL=diet.js.map

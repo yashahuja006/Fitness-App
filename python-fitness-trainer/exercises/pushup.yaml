@@ -1,0 +1,42 @@
+name: "Push Up"
+description: "Push-up exercise tracking elbow angle"
+
+# MediaPipe landmark indices for right arm
+landmarks:
+  shoulder: 12  # Right Shoulder
+  elbow: 14     # Right Elbow  
+  wrist: 16     # Right Wrist
+
+# State machine definition
+states:
+  START:
+    description: "Arms extended - plank position"
+    condition: "angle > 160"
+    
+  DOWN:
+    description: "Bottom of push-up - chest near ground"
+    condition: "angle < 90"
+    
+  UP:
+    description: "Return to plank position"
+    condition: "angle > 160"
+
+# Feedback rules with voice commands
+feedback:
+  - condition: "angle > 100 and state == DOWN"
+    message: "Go Lower - chest to ground"
+    voice: "Lower! Get your chest closer to the ground!"
+  - condition: "angle < 70 and state == DOWN"
+    message: "Perfect Push-up!"
+    voice: "Excellent form! Perfect push-up depth!"
+  - condition: "state == START"
+    message: "Ready for Push-up"
+    voice: "Hold that plank position! Ready for next push-up!"
+
+# Exercise parameters
+parameters:
+  angle_threshold_start: 160
+  angle_threshold_down: 90
+  feedback_threshold: 100
+  perfect_range_min: 60
+  perfect_range_max: 90
